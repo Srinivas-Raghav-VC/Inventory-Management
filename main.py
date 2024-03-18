@@ -1,7 +1,12 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem, QFileDialog, QMenuBar, QMenu, QAction, QMessageBox
-from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
+                             QPushButton, QTableWidget, QTableWidgetItem, QFileDialog, QMenuBar, QMenu, QAction,
+                             QMessageBox, QTextBrowser, QSlider, QCheckBox)
+from PyQt5.QtCore import Qt, QSettings
 from PyQt5.QtWidgets import QFormLayout
+from PyQt5.QtGui import QColor, QPalette, QColorConstants
+import csv
+
 
 import csv
 
@@ -73,7 +78,8 @@ class InventoryApp(QMainWindow):
 
         self.create_widgets()
         self.create_menus()
-
+        self.create_about_section()
+        
     def create_widgets(self):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -178,9 +184,6 @@ class InventoryApp(QMainWindow):
         settings_menu = QMenu("Settings", self)
         menu_bar.addMenu(settings_menu)
 
-        appearance_action = QAction("Appearance", self)
-        appearance_action.triggered.connect(self.change_appearance)
-        settings_menu.addAction(appearance_action)
 
     def add_product(self):
         try:
@@ -204,6 +207,20 @@ class InventoryApp(QMainWindow):
             self.product_table.setItem(row, 2, QTableWidgetItem(product.category))
             self.product_table.setItem(row, 3, QTableWidgetItem(str(product.price)))
             self.product_table.setItem(row, 4, QTableWidgetItem(str(product.quantity)))
+
+            # Set background color based on quantity
+            if product.quantity < 100:
+                background_color = QColor(255, 0, 0, 128)  # Red for quantity less than 100
+            elif product.quantity < 1000:
+                background_color = QColor(255, 255, 0, 128)  # Yellow for quantity less than 1000 but greater than or equal to 100
+            else:
+                background_color = QColor(0, 255, 0, 128)  # Green for quantity greater than or equal to 1000
+
+            for col in range(5):
+                item = self.product_table.item(row, col)
+                if item:
+                    item.setBackground(background_color)
+
 
     def clear_line_edits(self):
         self.id_line_edit.clear()
@@ -253,9 +270,34 @@ class InventoryApp(QMainWindow):
 
     def contact_support(self):
         print("Contact support")
+        
+    def create_about_section(self):
+        about_tab = QWidget()
+        self.tab_widget.addTab(about_tab, "About")
 
-    def change_appearance(self):
-        print("Change appearance")
+        about_layout = QVBoxLayout()
+        about_tab.setLayout(about_layout)
+
+        about_text = QTextBrowser()
+        about_text.setReadOnly(True)
+        about_text.append("Inventory Management System")
+        about_text.append("\n")
+        about_text.append("Credits:")
+        about_text.append("Srinivas Raghav V C")
+        about_text.append("Atharv Mishra")
+        about_text.append("Rishi Jain")
+        about_text.append("Shashank Upadhyay")
+        about_text.append("Varun Sandesh")
+        about_layout.addWidget(about_text)
+
+    def closeEvent(self, event):
+        reply = QMessageBox.question(self, 'Confirm Exit', "Are you sure you want to exit?",
+                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            event.accept()
+        else:
+            event.ignore()
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
