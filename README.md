@@ -9,8 +9,6 @@ Features
 * Add, update, and delete products
 * View products with color-coded quantity indicators
 * Save and load inventory to/from a CSV file
-* About section with credits
-* Dark mode and light mode themes
 
 Screenshots
 -----------
