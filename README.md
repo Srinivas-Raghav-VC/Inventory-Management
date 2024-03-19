@@ -24,6 +24,8 @@ Features
 * 🟨 Yellow - Highlight for Quantity less than 1000
 
 * 🟩 Green - Highlight for Quantity more than 1000
+
+* Documentation and Support 
   
 Screenshots
 -----------
