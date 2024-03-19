@@ -4,14 +4,26 @@ Inventory Management System
 A simple Inventory Management System application built using PyQt5 and Python.
 
 Features
---------
 
-* Add, update, and delete products
-* View products with color-coded quantity indicators
-* Save and load inventory to/from a CSV file
-* Export CSV File to Excel or PDF
-* Appearance Themes for the Application
-* Dialog boxes for Errors or Succesfulll
+\--------
+
+\* Add, update, and delete products
+
+\* View products with color-coded quantity indicators
+
+\* Save and load inventory to/from a CSV file
+
+\* Export CSV File to Excel or PDF
+
+\* Appearance Themes for the Application
+
+\* Dialog boxes for Errors or Successful
+
+\* 🟥 Red - Highlight for Quantity less than 100
+
+\* 🟨 Yellow - Highlight for Quantity less than 1000
+
+\* 🟩 Green - Highlight for Quantity more than 1000
   
 Screenshots
 -----------
