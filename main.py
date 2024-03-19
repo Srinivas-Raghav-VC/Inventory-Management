@@ -6,11 +6,13 @@ from PyQt5.QtCore import Qt, QSortFilterProxyModel
 from PyQt5.QtGui import QColor, QPalette, QColorConstants
 from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
 import csv
+import os
+import webbrowser
 
 
 class Product:
     def __init__(self, id, name, category, price, quantity):
-        self.id = iad
+        self.id = id
         self.name = name
         self.category = category
         self.price = price
@@ -301,10 +303,12 @@ class InventoryApp(QMainWindow):
             QMessageBox.information(self, "Success", "Product list exported to PDF successfully.")
 
     def show_documentation(self):
-        QMessageBox.information(self, "Documentation", "Please refer to the user manual for documentation.")
+        github_url = "https://github.com/BlizzyBastard/Inventory-Management/blob/main/Documentation.pdf"
+        webbrowser.open(github_url)
 
     def contact_support(self):
-        QMessageBox.information(self, "Contact Support", "Please email your inquiries to support@example.com")
+        github_url = "https://github.com/BlizzyBastard/Inventory-Management"
+        webbrowser.open(github_url)
 
     def show_settings_dialog(self):
         settings_dialog = QDialog(self)
