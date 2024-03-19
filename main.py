@@ -1,29 +1,31 @@
 import sys
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,QHeaderView,
                              QPushButton, QTableWidget, QTableWidgetItem, QFileDialog, QMenuBar, QMenu, QAction,
-                             QMessageBox, QTextBrowser, QSlider, QCheckBox)
-from PyQt5.QtCore import Qt, QSettings
-from PyQt5.QtWidgets import QFormLayout
+                             QMessageBox, QTextBrowser, QDialog, QComboBox, QStyleFactory, QFormLayout)
+from PyQt5.QtCore import Qt, QSortFilterProxyModel
 from PyQt5.QtGui import QColor, QPalette, QColorConstants
+from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
 import csv
 
-
-import csv
 
 class Product:
     def __init__(self, id, name, category, price, quantity):
-        self.id = id
+        self.id = iad
         self.name = name
         self.category = category
         self.price = price
         self.quantity = quantity
+
+    def __repr__(self):
+        return f"Product(id={self.id}, name='{self.name}', category='{self.category}', price={self.price}, quantity={self.quantity})"
+
 
 class Inventory:
     def __init__(self):
         self.products = []
 
     def add_product(self, product):
-        existing_product = next((p for p in self.products if p.id == product.id), None)
+        existing_product = self.find_product(product.id)
         if existing_product:
             print("ID already exists.")
         else:
@@ -31,7 +33,7 @@ class Inventory:
             print("Product added successfully.")
 
     def remove_product(self, id):
-        existing_product = next((p for p in self.products if p.id == id), None)
+        existing_product = self.find_product(id)
         if existing_product:
             self.products.remove(existing_product)
             print("Product removed successfully.")
@@ -61,12 +63,14 @@ class Inventory:
         try:
             with open(filename, 'r') as file:
                 reader = csv.reader(file)
+                self.products.clear()  # Clear existing products
                 for row in reader:
                     id, name, category, price, quantity = row
                     product = Product(int(id), name, category, float(price), int(quantity))
                     self.products.append(product)
+            QMessageBox.information(None, "Success", "Inventory imported successfully.")
         except FileNotFoundError:
-            print(f"Error: Could not open file {filename}")
+            QMessageBox.critical(None, "Error", f"Could not open file {filename}")
 
 class InventoryApp(QMainWindow):
     def __init__(self):
@@ -79,7 +83,7 @@ class InventoryApp(QMainWindow):
         self.create_widgets()
         self.create_menus()
         self.create_about_section()
-        
+
     def create_widgets(self):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -133,11 +137,15 @@ class InventoryApp(QMainWindow):
         search_layout.addWidget(search_label)
 
         self.search_line_edit = QLineEdit()
+        self.search_line_edit.textChanged.connect(self.search_products)
         search_layout.addWidget(self.search_line_edit)
 
         self.product_table = QTableWidget()
         self.product_table.setColumnCount(5)
         self.product_table.setHorizontalHeaderLabels(["ID", "Name", "Category", "Price", "Quantity"])
+        self.product_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.product_table.verticalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+        self.product_table.setSortingEnabled(True)
         view_products_layout.addWidget(self.product_table)
 
         buttons_layout = QHBoxLayout()
@@ -166,9 +174,24 @@ class InventoryApp(QMainWindow):
         load_button.clicked.connect(self.load_inventory)
         file_operations_layout.addWidget(load_button)
 
+        export_button = QPushButton("Export to Excel")
+        export_button.clicked.connect(self.export_to_excel)
+        file_operations_layout.addWidget(export_button)
+
+        export_pdf_button = QPushButton("Export to PDF")
+        export_pdf_button.clicked.connect(self.export_to_pdf)
+        file_operations_layout.addWidget(export_pdf_button)
+
     def create_menus(self):
         menu_bar = QMenuBar(self)
         self.setMenuBar(menu_bar)
+
+        file_menu = QMenu("File", self)
+        menu_bar.addMenu(file_menu)
+
+        quit_action = QAction("Quit", self)
+        quit_action.triggered.connect(self.close)
+        file_menu.addAction(quit_action)
 
         help_menu = QMenu("Help", self)
         menu_bar.addMenu(help_menu)
@@ -184,6 +207,9 @@ class InventoryApp(QMainWindow):
         settings_menu = QMenu("Settings", self)
         menu_bar.addMenu(settings_menu)
 
+        settings_action = QAction("Settings", self)
+        settings_action.triggered.connect(self.show_settings_dialog)
+        settings_menu.addAction(settings_action)
 
     def add_product(self):
         try:
@@ -197,7 +223,7 @@ class InventoryApp(QMainWindow):
             self.populate_product_table()
             self.clear_line_edits()
         except ValueError:
-            print("Invalid input. Please enter valid values.")
+            QMessageBox.warning(self, "Invalid Input", "Please enter valid values.")
 
     def populate_product_table(self):
         self.product_table.setRowCount(len(self.inventory.products))
@@ -220,7 +246,6 @@ class InventoryApp(QMainWindow):
                 item = self.product_table.item(row, col)
                 if item:
                     item.setBackground(background_color)
-
 
     def clear_line_edits(self):
         self.id_line_edit.clear()
@@ -259,18 +284,65 @@ class InventoryApp(QMainWindow):
     def load_inventory(self):
         filename, _ = QFileDialog.getOpenFileName(self, "Load Inventory", "", "CSV Files (*.csv)")
         if filename:
-            try:
-                self.inventory.load_inventory_from_file(filename)
-                self.populate_product_table()
-            except Exception as e:
-                QMessageBox.critical(self, "Error", f"Could not open file {filename}: {str(e)}")
+            self.inventory.load_inventory_from_file(filename)
+            self.populate_product_table()
+
+    def export_to_excel(self):
+        filename, _ = QFileDialog.getSaveFileName(self, "Export to Excel", "", "Excel Files (*.xlsx)")
+        if filename:
+            # Implement export to Excel functionality here
+            pass
+
+    def export_to_pdf(self):
+        printer = QPrinter(QPrinter.HighResolution)
+        dialog = QPrintDialog(printer, self)
+        if dialog.exec_() == QPrintDialog.Accepted:
+            self.product_table.render(printer)
+            QMessageBox.information(self, "Success", "Product list exported to PDF successfully.")
 
     def show_documentation(self):
-        print("Show documentation")
+        QMessageBox.information(self, "Documentation", "Please refer to the user manual for documentation.")
 
     def contact_support(self):
-        print("Contact support")
-        
+        QMessageBox.information(self, "Contact Support", "Please email your inquiries to support@example.com")
+
+    def show_settings_dialog(self):
+        settings_dialog = QDialog(self)
+        settings_dialog.setWindowTitle("Settings")
+        layout = QVBoxLayout()
+
+        # Add style options
+        style_label = QLabel("Application Style:")
+        layout.addWidget(style_label)
+        self.style_combo_box = QComboBox()
+        self.style_combo_box.addItems(QStyleFactory.keys())
+        layout.addWidget(self.style_combo_box)
+
+        # Add buttons
+        button_layout = QHBoxLayout()
+        ok_button = QPushButton("OK")
+        ok_button.clicked.connect(self.apply_settings)
+        button_layout.addWidget(ok_button)
+        cancel_button = QPushButton("Cancel")
+        cancel_button.clicked.connect(settings_dialog.reject)
+        button_layout.addWidget(cancel_button)
+        layout.addLayout(button_layout)
+
+        settings_dialog.setLayout(layout)
+        settings_dialog.exec_()
+
+    def apply_settings(self):
+        selected_style = self.style_combo_box.currentText()
+        QApplication.setStyle(QStyleFactory.create(selected_style))
+
+    def search_products(self, text):
+        proxy_model = QSortFilterProxyModel()
+        proxy_model.setSourceModel(self.product_table.model())
+        proxy_model.setFilterCaseSensitivity(Qt.CaseInsensitive)
+        proxy_model.setFilterKeyColumn(-1)  # Search all columns
+        proxy_model.setFilterFixedString(text)
+        self.product_table.setModel(proxy_model)
+
     def create_about_section(self):
         about_tab = QWidget()
         self.tab_widget.addTab(about_tab, "About")
@@ -291,16 +363,17 @@ class InventoryApp(QMainWindow):
         about_layout.addWidget(about_text)
 
     def closeEvent(self, event):
-        reply = QMessageBox.question(self, 'Confirm Exit', "Are you sure you want to exit?",
-                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        reply = QMessageBox.question(self, 'Message',
+            "Are you sure you want to quit?", QMessageBox.Yes | 
+            QMessageBox.No, QMessageBox.No)
+
         if reply == QMessageBox.Yes:
             event.accept()
         else:
             event.ignore()
 
-
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    inventory_app = InventoryApp()
-    inventory_app.show()
-    sys.exit(app.exec_())
+   app = QApplication(sys.argv)
+   inventory_app = InventoryApp()
+   inventory_app.show()
+   sys.exit(app.exec_())
