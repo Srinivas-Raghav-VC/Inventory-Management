@@ -51,13 +51,3 @@ License
 -------
 
 This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENSE) file for details.
-
-Credits
--------
-A Group Project by -
-
-    * Srinivas Raghav V C    
-    * Atharv Mishra
-    * Rishi Jain
-    * Shashank Upadhyay
-    * Varun Sandesh
